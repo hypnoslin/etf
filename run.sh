@@ -40,6 +40,7 @@ sort -o ./$today/merged.csv ./$today/merged.csv
 awk -F, '{a[$1]++;b[$1]=$2;c[$1]+=$3}END{for(i in a){printf "%d,%s,%.2f,%d\n", i,b[i],c[i],a[i];}}' OFS="," ./$today/merged.csv | sort -r -n -t "," -k 3 -o ./$today/merged.csv
 
 # Find the stock is selected by only one fund, and keep it and slice the rest
+# cp ./$today/merged.csv ./$today/rest.csv
 sed -i '/1$/q' ./$today/merged.csv
 
 # Calculate the ratio
