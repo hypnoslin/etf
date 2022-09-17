@@ -1,9 +1,9 @@
 #!/bin/sh
 
-#set -xv
+set -xv
 
 # Please modify the $total in awk command
-totoal=800000
+totoal=1000000
 today=$(date +%Y-%m-%d)
 
 # We will create a new folder to store data
@@ -43,6 +43,17 @@ awk -F, '{a[$1]++;b[$1]=$2;c[$1]+=$3}END{for(i in a){printf "%d,%s,%.2f,%d\n", i
 # cp ./$today/merged.csv ./$today/rest.csv
 sed -i '/1$/q' ./$today/merged.csv
 
+# Exclude
+exclude=$(cat ./exclude.conf | awk '{print $1;}')
+
+echo "Exclude" > ./$today/exclude
+
+for i in ${exclude[@]}
+do
+	sed -n "/$i/p" ./$today/merged.csv >> ./$today/exclude
+	sed -i "/$i/d" ./$today/merged.csv
+done
+
 # Calculate the ratio
 awk -F, '{i++;s+=$3;a[i]=$1;b[i]=$2;c[i]=$3;d[i]=$4;e[i]+=$3}END{for(j=1;j<=NR;j++){ printf"%d,%s,%.2f,%d,%.2f\n", a[j],b[j],c[j],d[j],e[j]/s*100}}' OFS="," ./$today/merged.csv  > ./$today/tmp.csv; mv ./$today/tmp.csv ./$today/merged.csv
 
@@ -63,11 +74,18 @@ mv ./$today/tmp.csv ./$today/merged.csv
 
 rm -f ./$today/stock_close.csv
 
-awk -F, '{s=800000*$5/100/$6/1000;printf"%.1f\n", s}' ./$today/merged.csv > ./$today/count.csv 
+awk -F, '{s=1000000*$5/100/$6/1000;printf"%.1f\n", s}' ./$today/merged.csv > ./$today/count.csv 
 paste -d "," ./$today/merged.csv ./$today/count.csv > ./$today/tmp.csv
 mv ./$today/tmp.csv ./$today/merged.csv
 rm -f ./$today/count.csv
 
-# Insert csv header
-sed  -i '1i Number,Name,Fund Rate,Count,Rate,Close Price,Amount' ./$today/merged.csv
+awk -F , '{x[xc++]=$7}END{for(i = 0; i < xc; i++) if(i < xc/2)printf "%d\n", x[i]+1; else printf "%d\n", x[i]}' ./$today/merged.csv > ./$today/adjust_count.csv
+paste -d "," ./$today/merged.csv ./$today/adjust_count.csv > ./$today/tmp.csv
+mv ./$today/tmp.csv ./$today/merged.csv
+rm -f ./$today/adjust_count.csv
 
+cat ./$today/exclude >> ./$today/merged.csv
+rm -f ./$today/exclude
+
+# Insert csv header
+sed  -i '1i Number,Name,Fund Rate,Count,Rate,Close Price,Amount,Adjust Amount' ./$today/merged.csv
