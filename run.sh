@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -xv
+#set -xv
 
 # Please modify the $total in awk command
 totoal=1000000
@@ -46,11 +46,11 @@ sed -i '/1$/q' ./$today/merged.csv
 # Exclude
 exclude=$(cat ./exclude.conf | awk '{print $1;}')
 
-echo "Exclude" > ./$today/exclude
+echo "Exclude,,,,,,," > ./$today/exclude
 
 for i in ${exclude[@]}
 do
-	sed -n "/$i/p" ./$today/merged.csv >> ./$today/exclude
+	sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/exclude
 	sed -i "/$i/d" ./$today/merged.csv
 done
 
