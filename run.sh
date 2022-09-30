@@ -39,6 +39,17 @@ cat ./$today/00713.csv >> ./$today/merged.csv
 sort -o ./$today/merged.csv ./$today/merged.csv
 awk -F, '{a[$1]++;b[$1]=$2;c[$1]+=$3}END{for(i in a){printf "%d,%s,%.2f,%d\n", i,b[i],c[i],a[i];}}' OFS="," ./$today/merged.csv | sort -r -n -t "," -k 3 -o ./$today/merged.csv
 
+# Include before we slice the list
+include=$(cat ./include.conf | awk '{print $1;}')
+
+echo "Include,,,,,,," > ./$today/include
+
+for i in ${include[@]}
+do
+	sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/include
+	sed -i "/$i/d" ./$today/merged.csv
+done
+
 # Find the stock is selected by only one fund, and keep it and slice the rest
 # cp ./$today/merged.csv ./$today/rest.csv
 sed -i '/1$/q' ./$today/merged.csv
@@ -86,6 +97,9 @@ rm -f ./$today/adjust_count.csv
 
 cat ./$today/exclude >> ./$today/merged.csv
 rm -f ./$today/exclude
+
+cat ./$today/include >> ./$today/merged.csv
+rm -f ./$today/include
 
 # Insert csv header
 sed  -i '1i Number,Name,Fund Rate,Count,Rate,Close Price,Amount,Adjust Amount' ./$today/merged.csv
