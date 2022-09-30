@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#set -xv
+set -xv
 
 # Please modify the $total in awk command
 totoal=1000000
@@ -90,7 +90,7 @@ paste -d "," ./$today/merged.csv ./$today/count.csv > ./$today/tmp.csv
 mv ./$today/tmp.csv ./$today/merged.csv
 rm -f ./$today/count.csv
 
-awk -F , '{x[xc++]=$7}END{for(i = 0; i < xc; i++) if(i < xc/2)printf "%d\n", x[i]+1; else printf "%d\n", x[i]}' ./$today/merged.csv > ./$today/adjust_count.csv
+awk -F , '{x[xc++]=$7}END{for(i = 0; i < xc; i++) if(i < xc/2 && index(x[i], ".0") == 0) printf "%d\n", x[i]+1 ; else printf "%d\n", x[i];}' ./$today/merged.csv > ./$today/adjust_count.csv
 paste -d "," ./$today/merged.csv ./$today/adjust_count.csv > ./$today/tmp.csv
 mv ./$today/tmp.csv ./$today/merged.csv
 rm -f ./$today/adjust_count.csv
