@@ -3,7 +3,7 @@
 set -xv
 
 # Please modify the $total in awk command
-totoal=1000000
+totoal=1400000
 today=$(date +%Y-%m-%d)
 
 # We will create a new folder to store data
@@ -11,16 +11,32 @@ mkdir -p $today
 
 # Create CSV
 # 00878
-curl -s -k https://www.cathaysite.com.tw/funds/etf/fundshares.aspx?fc=CN | sed -n "/td/p" | sed -n "s/.*<td.*>\(.*\)<\/td>.*/\1/p" | sed "s/ *//g" | sed -nf match_and_print.sed | awk 'NR%3{printf "%s,",$0;next;}1' | sed "s/%//" | awk '!seen[$0]++' > ./$today/00878.csv
+# curl -s -k https://www.cathaysite.com.tw/fund-details/ECN?tab=portfolio | sed -n "/td/p" | sed -n "s/.*<td.*>\(.*\)<\/td>.*/\1/p" | sed "s/ *//g" | sed -nf match_and_print.sed | awk 'NR%3{printf "%s,",$0;next;}1' | sed "s/%//" | awk '!seen[$0]++' > ./$today/00878.csv
+python 00878.py | sed "s/ /\n/g" | sed "s/%//g" | sed "/^$/d" | awk 'NR%2{printf"%s,",$0;next;}1' > ./$today/00878.csv
+
+name=$(awk -F ',' '{print $1}' ./$today/00878.csv)
+curl 'https://stock.wespai.com/p/3752' -H 'authority: stock.wespai.com' --compressed > ./tmp.html
+# Get stock number by name
+for i in $name
+do
+    sed -n "/>$i</p" ./tmp.html | sed "s/.*dividend_\([0-9]*\)\.html.*/\1/g" >> ./$today/00878_name.csv
+done
+
+rm -f ./tmp.html
+
+paste -d "," ./$today/00878_name.csv ./$today/00878.csv > ./$today/tmp.csv
+mv ./$today/tmp.csv ./$today/00878.csv
+rm -f ./$today/00878_name.csv
 
 if [ ! -s ./$today/00878.csv ]; then
 	# The file is empty.
 	echo "https://www.cathaysite.com.tw is not available"
-	curl -s 'https://www.cmoney.tw/etf/ashx/e210.ashx' --data-raw 'action=GetShareholdingDetails&stockId=00878' | jq . | sed -n -Ee "/^ *\"(CommKey|CommName|Weights)/p" | awk 'NR%3{printf"%s",$0;next;}1' | sed "s/ *//g" | sed "s/\"//g" | sed "s/[A-Za-z]\+://g" | sed "s/,$//" | sed -n "/^[0-9]\{4\},/p" > ./$today/00878.csv
+	curl -s 'https://www.moneydj.com/ETF/X/Basic/Basic0007A.xdjhtm?etfid=00878.TW' --data-raw 'action=GetShareholdingDetails&stockId=00878' | jq . | sed -n -Ee "/^ *\"(CommKey|CommName|Weights)/p" | awk 'NR%3{printf"%s",$0;next;}1' | sed "s/ *//g" | sed "s/\"//g" | sed "s/[A-Za-z]\+://g" | sed "s/,$//" | sed -n "/^[0-9]\{4\},/p" > ./$today/00878.csv
 fi
 
 # 00915
-curl -s -k https://www.kgifund.com.tw/Fund/Detail?fundID=J015 | sed -n "/td/p" | sed -n "s/.*<td.*>\(.*\)<\/td>.*/\1/p" | sed "s/ *//g" | sed -nf match_and_print.sed | recode html...utf-8 | awk 'NR%3{printf"%s,",$0;next;}1' |  awk '!seen[$0]++' > ./$today/00915.csv
+# python 00915.py | sed "/^$/d" | awk 'NR%4{printf "%s,",$0;next;}1' | awk -F ',' '{print $1,$2,$NF}' | sed "s/ *//g" | sed -n -E "/^[0-9]{,4},/p" > ./$today/00915.csv
+python 00915.py | sed "/^$/d" | awk 'NR%4{printf "%s,",$0;next;}1' | awk -F ',' '{printf "%s,%s,%s\n", $1,$2,$NF}' | sed "s/ *//g" | sed -n -E "/^[0-9]{,4},/p" > ./$today/00915.csv
 
 if [ ! -s ./$today/00915.csv ]; then
 	# The file is empty.
@@ -29,7 +45,7 @@ if [ ! -s ./$today/00915.csv ]; then
 fi
 
 # 00713
-curl -s 'https://www.cmoney.tw/etf/ashx/e210.ashx' --data-raw 'action=GetShareholdingDetails&stockId=00713' | jq . | sed -n -Ee "/^ *\"(CommKey|CommName|Weights)/p" | awk 'NR%3{printf"%s",$0;next;}1' | sed "s/ *//g" | sed "s/\"//g" | sed "s/[A-Za-z]\+://g" | sed "s/,$//" | sed -n "/^[0-9]\{4\},/p" > ./$today/00713.csv
+python 00713.py | sed -E -n "/^(商品代碼|商品名稱|商品權重)/p" | awk '{print $2}' | awk 'NR%3{printf "%s,",$0;next;}1' > ./$today/00713.csv
 
 # Merge
 cat ./$today/00878.csv > ./$today/merged.csv
