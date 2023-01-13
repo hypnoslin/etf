@@ -6,7 +6,7 @@ url = "https://www.cathaysite.com.tw/fund-details/ECN?tab=portfolio"
 
 # create a new Firefox session
 driver = webdriver.Chrome()
-driver.implicitly_wait(30)
+driver.implicitly_wait(60)
 driver.get(url)
 
 # Pass to BS4
