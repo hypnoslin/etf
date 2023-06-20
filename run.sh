@@ -60,11 +60,21 @@ include=$(cat ./include.conf | awk '{print $1;}')
 
 echo "Include,,,,,,," > ./$today/include
 
-for i in ${include[@]}
-do
-	sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/include
-	sed -i "/$i/d" ./$today/merged.csv
-done
+if [[ -a exclude ]]; then
+    echo "exclude is an array"
+    for i in ${include[@]}
+    do
+        sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/include
+        sed -i "/$i/d" ./$today/merged.csv
+    done
+else
+    for i in $include
+    do
+        sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/include
+        sed -i "/$i/d" ./$today/merged.csv
+    done
+fi
+
 
 # Find the stock is selected by only one fund, and keep it and slice the rest
 # cp ./$today/merged.csv ./$today/rest.csv
@@ -75,11 +85,19 @@ exclude=$(cat ./exclude.conf | awk '{print $1;}')
 
 echo "Exclude,,,,,,," > ./$today/exclude
 
-for i in ${exclude[@]}
-do
-	sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/exclude
-	sed -i "/$i/d" ./$today/merged.csv
-done
+if [[ -a exclude ]]; then
+    for i in ${exclude[@]}
+    do
+        sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/exclude
+        sed -i "/$i/d" ./$today/merged.csv
+    done
+else
+    for i in $exclude
+    do
+        sed -n "/$i/p" ./$today/merged.csv | sed "s/$/,,,,/" >> ./$today/exclude
+        sed -i "/$i/d" ./$today/merged.csv
+    done
+fi
 
 # Calculate the ratio
 awk -F, '{i++;s+=$3;a[i]=$1;b[i]=$2;c[i]=$3;d[i]=$4;e[i]+=$3}END{for(j=1;j<=NR;j++){ printf"%d,%s,%.2f,%d,%.2f\n", a[j],b[j],c[j],d[j],e[j]/s*100}}' OFS="," ./$today/merged.csv  > ./$today/tmp.csv; mv ./$today/tmp.csv ./$today/merged.csv

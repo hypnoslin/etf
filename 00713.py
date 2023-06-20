@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
 # Desired URL
@@ -10,7 +11,7 @@ driver.implicitly_wait(30)
 driver.get(url)
 
 # Get button and click it
-python_button = driver.find_element_by_class_name("moreBtn")
+python_button = driver.find_element(By.CLASS_NAME, "moreBtn")
 python_button.click() #click load more button
 
 # Pass to BS4
